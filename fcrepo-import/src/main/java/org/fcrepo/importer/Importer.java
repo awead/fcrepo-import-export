@@ -38,6 +38,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.RDFDataMgr;
@@ -92,7 +94,9 @@ public class Importer implements TransferProcess {
     }
 
     private void importDirectory(final File dir) {
-        for (final File f : dir.listFiles()) {
+        final File[] files = dir.listFiles();
+        Arrays.sort(files, new FilesFirstComparator());
+        for (final File f : files) {
             if (f.isDirectory()) {
                 importDirectory(f);
             } else if (f.isFile()) {
@@ -207,5 +211,19 @@ public class Importer implements TransferProcess {
 
     private File fileForURI(final URI uri) {
         return new File(config.getBinaryDirectory() + TransferProcess.decodePath(uri.getPath()));
+    }
+}
+
+/*
+ * Comparator that sorts files before directories.
+ */
+class FilesFirstComparator implements Comparator<File> {
+    public int compare(final File f1, final File f2) {
+        if (f1.isFile() && f2.isDirectory()) {
+            return -1;
+        } else if (f2.isFile() && f1.isDirectory()) {
+            return 1;
+        }
+        return f1.compareTo(f2);
     }
 }
